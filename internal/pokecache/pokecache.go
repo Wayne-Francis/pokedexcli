@@ -29,17 +29,19 @@ func NewCache(interval time.Duration) *Cache {
 }
 
 func (c *Cache) reapLoop() {
-    c.mu.Lock()
-    defer c.mu.Unlock()
-    for range ticker.C { 
-     for i, _ := range c.entries {
-       if c.entries[i].createdAt > c.interval{
-        delete(c.entries, i)
-       }
-      } 
+    ticker := time.NewTicker(c.interval)
+    defer ticker.Stop()
+
+    for range ticker.C {
+        c.mu.Lock()
+        for key, entry := range c.entries {
+            if time.Since(entry.createdAt) > c.interval {
+                delete(c.entries, key)
+            }
+        }
+        c.mu.Unlock()
     }
 }
-
 
 
 func (c *Cache) Add(key string, val []byte) {
