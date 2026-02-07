@@ -1,5 +1,7 @@
 package main
 
+import ("github.com/Wayne-Francis/pokedexcli/internal/pokecache")
+
 type cliCommand struct {
     name        string
     description string
@@ -9,6 +11,7 @@ type cliCommand struct {
 type config struct {
     Next        string
     Previous    string
+    cache 	*pokecache.Cache
 }
 
 var commands = map[string]cliCommand{
