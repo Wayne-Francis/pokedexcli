@@ -4,56 +4,58 @@ import (
     "encoding/json"
     "fmt"
     "io"
-    "log"
     "net/http"
+    "github.com/Wayne-Francis/pokedexcli/internal/pokeapi"
 )
 
-func commandExplore(cfg *config) error {
-    if cfg.Next == "" {
-	cfg.Next = "https://pokeapi.co/api/v2/location-area"
+func commandExplore(cfg *config, args []string) error {
+    baseurl := "https://pokeapi.co/api/v2/location-area/"
+    if len(args) < 1 {
+        fmt.Println("please enter an area to explore")
+        return nil
     }
+    areaname := args[0]
+    fullurl := baseurl + areaname + "/"
+
     var body []byte
     var err error
-    cachedBody, found := cfg.cache.Get(cfg.Next)
+
+    cachedBody, found := cfg.cache.Get(fullurl)
     if found {
-    body = cachedBody
+        body = cachedBody
     } else {
-    res, err = http.Get(cfg.Next)
-    if err != nil {
-        log.Fatal(err)
+        res, err := http.Get(fullurl)
+        if err != nil {
+            return err
+        }
+        defer res.Body.Close()
+
+        body, err = io.ReadAll(res.Body)
+        if err != nil {
+            return err
+        }
+
+        if res.StatusCode == http.StatusNotFound {
+            return fmt.Errorf("no such area: %s", areaname)
+        }
+        if res.StatusCode > 299 {
+            return fmt.Errorf("explore failed with status code: %d", res.StatusCode)
+        }
+
+        cfg.cache.Add(fullurl, body)
     }
 
-    body, err = io.ReadAll(res.Body)
-    res.Body.Close()
-
-    if res.StatusCode > 299 {
-        log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-    }
+    var a pokeapi.LocationArea
+    err = json.Unmarshal(body, &a)
     if err != nil {
-        log.Fatal(err)
-    }
-     cfg.cache.Add(cfg.Next, body)
-    }
-    var m Map
-    err = json.Unmarshal(body, &m)
-    if err != nil {
-        fmt.Println(err)
+        return err
     }
 
-    for _, location := range m.Results {
-	fmt.Println(location.Name)
- 	}
-    if m.Next != nil {
-	cfg.Next = *m.Next
-	} 
-    if m.Next == nil {
-	cfg.Next = ""
-	}
-    if m.Previous != nil {
-	cfg.Previous = *m.Previous
-	} 
-    if m.Previous == nil {
-	cfg.Previous = ""
-	}	
+    fmt.Printf("Exploring %s...\n", areaname)
+    fmt.Println("Found Pokemon:")
+    for _, enc := range a.PokemonEncounters {
+        fmt.Println(enc.Pokemon.Name)
+    }
+
     return nil
 }

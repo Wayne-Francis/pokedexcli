@@ -6,19 +6,25 @@ import (
     "io"
     "log"
     "net/http"
-	"github.com/Wayne-Francis/pokedexcli/internal/pokeapi"
+    "github.com/Wayne-Francis/pokedexcli/internal/pokeapi"
 )
 
-func commandMap(cfg *config) error {
+func commandMap(cfg *config, arg []string) error {
     if cfg.Next == "" {
 	cfg.Next = "https://pokeapi.co/api/v2/location-area"
     }
+    var body []byte
+    var err error
+    cachedBody, found := cfg.cache.Get(cfg.Next)
+    if found {
+    body = cachedBody
+    } else {
     res, err := http.Get(cfg.Next)
     if err != nil {
         log.Fatal(err)
     }
 
-    body, err := io.ReadAll(res.Body)
+    body, err = io.ReadAll(res.Body)
     res.Body.Close()
 
     if res.StatusCode > 299 {
@@ -27,8 +33,9 @@ func commandMap(cfg *config) error {
     if err != nil {
         log.Fatal(err)
     }
-
-    var m pokeapi.LocationAreaList
+     cfg.cache.Add(cfg.Next, body)
+    }
+    var m pokeapi.Map
     err = json.Unmarshal(body, &m)
     if err != nil {
         fmt.Println(err)
@@ -52,17 +59,23 @@ func commandMap(cfg *config) error {
     return nil
 }
 
-func commandMapb(cfg *config) error {
+func commandMapb(cfg *config, arg []string) error {
     if cfg.Previous == "" {
       fmt.Println("you're on the first page")
       return nil
     }
+    var body []byte
+    var err error
+    cachedBody, found := cfg.cache.Get(cfg.Previous)
+    if found {
+    body = cachedBody
+    } else {
     res, err := http.Get(cfg.Previous)
     if err != nil {
         log.Fatal(err)
     }
 
-    body, err := io.ReadAll(res.Body)
+    body, err = io.ReadAll(res.Body)
     res.Body.Close()
 
     if res.StatusCode > 299 {
@@ -71,8 +84,9 @@ func commandMapb(cfg *config) error {
     if err != nil {
         log.Fatal(err)
     }
-
-    var m pokeapi.LocationAreaList
+    cfg.cache.Add(cfg.Previous, body)
+    }
+    var m pokeapi.Map
     err = json.Unmarshal(body, &m)
     if err != nil {
         fmt.Println(err)
