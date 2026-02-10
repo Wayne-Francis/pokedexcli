@@ -45,15 +45,25 @@ func main() {
             description: "Try to Catch a Pokemon!",
             callback:    commandCatch,
         },
+        "inspect": {
+            name:        "inspect",
+            description: "Inspect the stats of a Pokemon you have caught",
+            callback:    commandInspect,
+        },
+        "pokedex": {
+            name:        "pokedex",
+            description: "List all the Pokemon you have caught",
+            callback:    commandPokedex,
+        },
     }
     cfg := &config{
     cache: pokecache.NewCache(5 * time.Second),
-    pokedex: make(map[string]pokeapi.Pokemon),
+    pokedex: make(map[string]pokeapi.FullPokemon),
     }
     for {
         fmt.Println("Pokedex > ")
-        scanner.Scan()         // moves to the next line
-		line := scanner.Text()     // gets the current line
+        scanner.Scan()         
+		line := scanner.Text()     
         tokens := cleanInput(line)
         if len(tokens) == 0 {
         continue

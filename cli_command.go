@@ -17,7 +17,7 @@ type config struct {
     Next        string
     Previous    string
     cache 	*pokecache.Cache
-    pokedex  map[string]pokeapi.Pokemon
+    pokedex  map[string]pokeapi.FullPokemon
 }
 
 //var commands = map[string]cliCommand{

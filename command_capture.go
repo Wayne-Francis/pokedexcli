@@ -46,7 +46,7 @@ func commandCatch(cfg *config, args []string) error {
         cfg.cache.Add(fullurl, body)
     }
 
-    var p pokeapi.Pokemon
+    var p pokeapi.FullPokemon
     err = json.Unmarshal(body, &p)
     if err != nil {
         return err
